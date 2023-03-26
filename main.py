@@ -103,7 +103,7 @@ def execute_pileline(input_dir, output_dir):
     for songs_folder in tqdm(listdir(input_dir)):
         
         input_folder = join(input_dir, songs_folder)
-        output_folder = join(output_dir, songs_folder)
+        output_folder = join(output_dir, songs_folder.replace(' ', '_'))
         temp_folder = join(output_folder, Config.temp_dir)
         
         print("> Running pipeline for: " + input_folder + "...")
