@@ -1,4 +1,7 @@
-# Source: https://github.com/WeberJulian/TTS-1/blob/multilingual/TTS/bin/remove_silence_using_vad.py
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Source: https://github.com/WeberJulian/TTS-1/blob/multilingual/TTS/bin/remove_silence_using_vad.py 
+#
 from os.path import basename, exists, join
 from tqdm import tqdm
 from glob import glob
@@ -36,7 +39,7 @@ class FrameGenerator(object):
             offset += n
 
 class SilenceRemover:
-    def __init__(self, sample_rate=32000, frame_duration_ms=30, padding_duration_ms=300, aggressiveness=2, audio_format='wav'):  
+    def __init__(self, sample_rate=32000, frame_duration_ms=30, padding_duration_ms=300, aggressiveness=2, audio_format='wav', verbose=1):  
         assert sample_rate in (8000, 16000, 32000, 48000)
         self.sample_rate = sample_rate
         self.frame_duration_ms = frame_duration_ms
@@ -45,9 +48,11 @@ class SilenceRemover:
         self.num_padding_frames = int(padding_duration_ms / frame_duration_ms)
         self.ring_buffer = collections.deque(maxlen=self.num_padding_frames)
         self.triggered = False
-        self.voiced_frames = []  
         self.audio_format=audio_format 
+        self.verbose = verbose
         self.frame_generator = FrameGenerator
+        self.voiced_frames = []  
+
 
     def read_wave(self, filepath):
         """Reads a .wav file.
@@ -139,8 +144,7 @@ class SilenceRemover:
             yield b''.join([f.bytes for f in voiced_frames])
 
 
-    def proccess_file(self, input_filepath, output_filepath, force=False):
-
+    def process_file(self, input_filepath, output_filepath, force=False):
         filename = basename(input_filepath)
         # ignore if the file exists 
         if not force and exists(output_filepath):
@@ -169,17 +173,17 @@ class SilenceRemover:
                     self.write_wave(segment, output_filepath)
                     return True
         else:
-            print("> Just Copying the file to:", output_filepath)
+            if self.verbose: print("----> Just Copying the file to:", output_filepath)
             # if fail to remove silence just write the file
             self.write_wave(audio_data, output_filepath)
 
 
-    def proccess_folder(self, input_dir, output_dir, force=False):
-
+    def process_folder(self, input_dir, output_dir, force=False):
         for input_filepath in tqdm(glob(input_dir + '/*.{}'.format(self.audio_format))):
+            if self.verbose: print("----> Processing silence at file {}".format(basename(input_filepath)))
             filename = basename(input_filepath)
             output_filepath = join(output_dir, filename)
-            self.proccess_file(input_filepath, output_filepath, force=False)
+            self.process_file(input_filepath, output_filepath, force=False)
 
 
 if __name__ == "__main__":
@@ -188,24 +192,23 @@ if __name__ == "__main__":
     python remove_silence.py -i=input -o=output -g=/*.wav -a=2 
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', type=str, default='input',
-                        help='Input dir')
-    parser.add_argument('-o', '--output', type=str, default='output',
-                        help='Output dir')
+    parser.add_argument('-i', '--input', default='input', help='Input folder.')
+    parser.add_argument('-o', '--output', default='output', help='Output folder.')
     parser.add_argument('--audio_format', type=str, default='wav',
                         help='Audio codec. Ex: wav, mp3, flac, etc.')
     parser.add_argument('--sr', type=int, default=32000)    
     parser.add_argument('-a', '--aggressiveness', type=int, default=2,
                         help='set its aggressiveness mode, which is an integer between 0 and 3. 0 is the least aggressive about filtering out non-speech, 3 is the most aggressive.')
     parser.add_argument('-f', '--force', type=bool, default=False,
-                        help='Overwrite if the file already exists.')    
-
+                        help='Overwrite if the file already exists.')
+    parser.add_argument('--verbose', default=1, help="Verbosity level: 0 or 1.")
     args = parser.parse_args()
 
     silence_remover = SilenceRemover(
         sample_rate=args.sr, 
         frame_duration_ms=30, 
         padding_duration_ms=300, 
-        audio_format=args.audio_format
+        audio_format=args.audio_format,
+        verbose=args.verbose
     )
-    silence_remover.proccess_folder(args.input, args.output, args.force)
+    silence_remover.process_folder(args.input, args.output, args.force)

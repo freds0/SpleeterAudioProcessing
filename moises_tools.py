@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
 import argparse
 from glob import glob
 import requests
@@ -13,9 +16,11 @@ class MoisesAPI:
     Class that encapsulates the Moises API functions
     '''
 
-    def __init__(self, moises_id, waiting_time=5):
+    def __init__(self, moises_id, audio_format='flac', waiting_time=5, verbose=1):
         self.moises_id = moises_id
+        self.audio_format = audio_format
         self.waiting_time = waiting_time
+        self.verbose = verbose
 
 
     def get_response(self, job_id):
@@ -37,13 +42,13 @@ class MoisesAPI:
             status_response = self.get_response(job_id)
 
             if status_response.json()['status'] == 'SUCCEEDED':
-                print("------> Job succeeded...")
+                if self.verbose > 1: print("------> Job succeeded...")
                 return status_response
             elif status_response.json()['status'] == 'FAILED':
-                print("------> Job failed...")
+                if self.verbose > 1: print("------> Job failed...")
                 return False
             else:
-                print("------> Waiting response...")
+                if self.verbose > 1: print("------> Waiting response...")
                 time.sleep(int(self.waiting_time))
 
 
@@ -96,42 +101,42 @@ class MoisesAPI:
         return True
     
         
-    def process_file(self, audio_filepath, output_filepath, audio_format, lyrics_filepath):
-        print("------> Requesting URL...")
+    def process_file(self, audio_filepath, output_filepath, lyrics_filepath):
+        if self.verbose > 1: print("------> Requesting URL...")
         request_url_response = self.request_url()  
 
-        print("------> Uploading file...")
+        if self.verbose > 1: print("------> Uploading file...")
         upload_response = self.upload_file(request_url_response, audio_filepath)
 
-        print("------> Starting job...")
+        if self.verbose > 1: print("------> Starting job...")
         job_response = self.start_new_job(basename(audio_filepath), request_url_response)
 
-        print("------> Getting results...")
+        if self.verbose > 1: print("------> Getting results...")
         response = self.get_job_result(job_response.json()['id'])
 
         if response:
-            print("------> Saving results...")
+            if self.verbose > 1: print("------> Saving results...")
             return self.save_results(response, output_filepath, lyrics_filepath)
         else:
             return False
 
 
-    def process_folder(self, input_dir, output_dir, audio_format):
+    def process_folder(self, input_dir, output_dir):
         if not exists(output_dir): 
             makedirs(output_dir)
 
-        for audio_filepath in tqdm(glob(input_dir + "/*.{}".format(audio_format))):
+        for audio_filepath in tqdm(glob(input_dir + "/*.{}".format(self.audio_format))):
 
-            print("----> Processing file using MOISES api: {}".format(basename(audio_filepath)))
-            filename = basename(audio_filepath).replace('.{}'.format(audio_format), '').replace(' ', '_')
-            output_filepath = join(output_dir, filename + '.{}'.format(audio_format))
+            if self.verbose: print("----> Processing file using MOISES api: {}".format(basename(audio_filepath)))
+            filename = basename(audio_filepath).replace('.{}'.format(self.audio_format), '').replace(' ', '_')
+            output_filepath = join(output_dir, filename + '.{}'.format(self.audio_format))
             lyrics_filepath = join(output_dir, filename + '.json')
 
             if exists(output_filepath):
-                print("------> File already processed: {}".format(basename(filename)))
+                if self.verbose: print("------> File already processed: {}".format(basename(filename)))
                 continue
-            if not(self.process_file(audio_filepath, output_filepath, audio_format, lyrics_filepath)):
-                print("------> Error processing file: {}".format(basename(filename)))
+            if not(self.process_file(audio_filepath, output_filepath, lyrics_filepath)):
+                if self.verbose: print("------> Error processing file: {}".format(basename(filename)))
                 continue
 
         return True
@@ -140,14 +145,16 @@ class MoisesAPI:
 def main():
 
     parser = argparse.ArgumentParser('Extract vocals and transcriptions from music files using MOISES API')
-    parser.add_argument('--input', default='input', help='Input folder')
-    parser.add_argument('--output', default='output', help='Output folder')
+    parser.add_argument('-i', '--input', default='input', help='Input folder.')
+    parser.add_argument('-o', '--output', default='output', help='Output folder.')
     parser.add_argument('--audio_format', default='flac', help='Audio file extensions: wav, flac, mp3.')
+    parser.add_argument('--waiting_time', default=5, type=int, help='Waiting time in seconds.')
+    parser.add_argument('--verbose', default=1, help="Verbosity level: 0, 1 or 2.")
     parser.add_argument('--moises_id', default='5f9c1b0b-8c1c-4b5e-9c1b-0b8c1c8b5e9c')
     args = parser.parse_args()
 
-    moises_api = MoisesAPI(args.moises_id)
-    moises_api.process_folder(args.input, args.output, args.audio_format)
+    moises_api = MoisesAPI(args.moises_id, args.audio_format, args.waiting_time, args.verbose)
+    moises_api.process_folder(args.input, args.output)
 
 
 if __name__ == "__main__":

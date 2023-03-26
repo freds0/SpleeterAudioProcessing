@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Adapted from https://gist.github.com/keithito/771cfc1a1ab69d1957914e377e65b6bd from Keith Ito: kito@kito.us
+# Source https://gist.github.com/keithito/771cfc1a1ab69d1957914e377e65b6bd
 #
 from glob import glob
 import argparse
@@ -41,16 +41,17 @@ class Segment:
 
 
 class AudioSegmenter:
-    def __init__(self, audio_format='wav', sample_rate=24000, min_duration=5, max_duration=15, max_gap_duration=0.5, threshold_db=28, end_of_file_extension=0.2, frame_length=1024, hop_length=256):
+    def __init__(self, audio_format='wav', sample_rate=24000, min_duration=5, max_duration=15, max_gap_duration=0.5, threshold_db=28, segment_extension=0.2, frame_length=1024, hop_length=256, verbose=1):
         self.audio_format = audio_format
         self.sample_rate = sample_rate
         self.min_duration = min_duration
         self.max_duration = max_duration
         self.max_gap_duration = max_gap_duration
         self.threshold_db = threshold_db
-        self.end_of_file_extension = end_of_file_extension
+        self.end_of_file_extension = segment_extension
         self.frame_length = frame_length
         self.hop_length = hop_length
+        self.verbose = verbose
         self.output_filename = False
         self.output_filename_id = 1
 
@@ -148,15 +149,15 @@ class AudioSegmenter:
         total_duration = 0
         filenames = self.__load_filenames(input_dir)
         if len(filenames) == 0:
-            print('No files found in %s' % input_dir)
+            if self.verbose: print('------> No files found in %s' % input_dir)
             return False
         
         for i, (filename, input_filepath) in enumerate(filenames.items()):
-            print('Loading %s: %s (%d of %d)' % (filename, input_filepath, i+1, len(filenames)))
+            if self.verbose: print('------> Loading %s: %s (%d of %d)' % (filename, input_filepath, i+1, len(filenames)))
 
             # Load audio
             audio_data, sample_rate = librosa.load(input_filepath, sr=self.sample_rate)
-            print(' -> Loaded %.1f min of audio. Splitting...' % (len(audio_data) / self.sample_rate / 60))
+            if self.verbose > 1: print('------> Loaded %.1f min of audio. Splitting...' % (len(audio_data) / self.sample_rate / 60))
 
             # Find best segments
             segments = self.__find_segments(input_filepath, audio_data)
@@ -170,7 +171,7 @@ class AudioSegmenter:
                 s.set_filename_and_id(input_filepath, '%s-%04d' % (filename, j))
                 j = j + 1
 
-            print(' -> Segmented into %d parts (%.1f min, %.2f sec avg)' % (
+            if self.verbose > 1: print('------> Segmented into %d parts (%.1f min, %.2f sec avg)' % (
                 len(segments), duration / 60, duration / len(segments)))
 
             # Write segments to disk:
@@ -186,23 +187,23 @@ class AudioSegmenter:
                     segment_max_duration = duration_segment
 
                 mean_duration = mean_duration + duration_segment
-            print(' -> Wrote %d segment wav files' % len(segments))
-            print(' -> Progress: %d segments, %.2f hours, %.2f sec avg' % (
+            if self.verbose > 1: print('------> Wrote %d segment wav files' % len(segments))
+            if self.verbose > 1: print('------> Progress: %d segments, %.2f hours, %.2f sec avg' % (
                 len(all_segments), total_duration / 3600, total_duration / len(all_segments)))
 
-        print('Writing metadata for %d segments (%.2f hours)' % (len(all_segments), total_duration / 3600))
+        if self.verbose: print('------> Writing metadata for %d segments (%.2f hours)' % (len(all_segments), total_duration / 3600))
         with open(join(output_dir, 'segments.csv'), 'w') as f:
             for s in all_segments:
                 f.write('%s|%s|%d|%d\n' % (s.id, s.filename, s.start, s.end))
-        print('Mean: %f' %( mean_duration / len(segments) ))
-        print('Max: %d' %(segment_max_duration ))
+        if self.verbose > 1: print('------> Mean: %f' %( mean_duration / len(segments) ))
+        if self.verbose > 1: print('------> Max: %d' %(segment_max_duration ))
         return True
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', default='./input', help='Name of the origin wav folder')
-    parser.add_argument('-o', '--output', default='./output/wavs', help='Name of wav folder')
+    parser = argparse.ArgumentParser("Segments audio files into silent chunks")
+    parser.add_argument('-i', '--input', default='input', help='Input folder.')
+    parser.add_argument('-o', '--output', default='output', help='Output folder.')
     parser.add_argument('--audio_format', type=str, default='wav', help='Audio format: wav, mp3, flac, etc.')    
     parser.add_argument('--min_duration', type=float, default=3.0, help='In seconds')
     parser.add_argument('--max_duration', type=float, default=15.0, help='In seconds')
@@ -211,6 +212,7 @@ def main():
     parser.add_argument('--output_filename', type=str, default=False, help='')
     parser.add_argument('--output_filename_id', type=int, default=1, help='Sequencial number used for id filename.')
     parser.add_argument('--threshold_db', type=float, default=28.0, help='The threshold (in decibels) below reference to consider as silence')
+    parser.add_argument('--verbose', default=1, help="Verbosity level: 0, 1 or 2.")
     args = parser.parse_args()
 
 
@@ -220,7 +222,8 @@ def main():
         min_duration=args.min_duration, 
         max_duration=args.max_duration, 
         max_gap_duration=args.max_gap_duration, 
-        threshold_db=args.threshold_db
+        threshold_db=args.threshold_db,
+        verbose=args.verbose
     )
 
     audio_segmenter.build_segments(args.input, args.output)
