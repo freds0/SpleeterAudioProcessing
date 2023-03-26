@@ -1,6 +1,7 @@
 # Input and output folders
 input
 output 
+pretrained_models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

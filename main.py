@@ -10,6 +10,7 @@ from shutil import rmtree
 
 from conversion_tools import AudioConverter
 from moises_tools import MoisesAPI
+from spleeter_tools import SpleeterAPI
 from acustic_tools import SilenceRemover
 from segment_tools import  AudioSegmenter
 from normalization_tools import AudioNormalizer
@@ -27,6 +28,21 @@ def moises_api_runner(input_dir, output_dir):
     moises_api.process_folder(
         input_dir=input_dir, 
         output_dir=output_dir, 
+    )
+
+
+def spleeter_api_runner(input_dir, output_dir):
+    '''
+    Extract vocals from audio files in a folder
+    '''
+    spleeter_api = SpleeterAPI(
+        audio_format=Config.input_audio_format,
+        sample_rate=Config.vad_sample_rate,
+        verbose=Config.verbose
+    )
+    spleeter_api.process_folder(
+        input_dir=input_dir,
+        output_dir=output_dir
     )
 
 
@@ -115,7 +131,7 @@ def execute_pileline(input_dir, output_dir):
         moises_temp_folder = join(temp_folder, 'moises')
         if not (exists(moises_temp_folder)):
             makedirs(moises_temp_folder)
-        moises_api_runner(input_folder, moises_temp_folder)
+        spleeter_api_runner(input_folder, moises_temp_folder)
 
         print("--> Converting audio files to wav... ")
         converted_temp_folder = join(temp_folder, 'converted')

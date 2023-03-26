@@ -35,6 +35,11 @@ $ conda activate moises
 To install dependencies, run the command:
 
 ```bash
+$ sudo apt-get update; sudo apt-get install ffmpeg
+```
+And install the requirements:
+
+```bash
 $ pip install -r requirements.txt
 ```
 

@@ -10,7 +10,7 @@ class Config:
     aggressiveness = 2
 
     # moises settings
-    moises_id = ""
+    moises_id = "e3a6cc41-802b-4de7-bcb7-5534215a0e85"
     waiting_time = 5
     
     # segments settings
