@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 import argparse
-from glob import glob
-from os.path import join, exists, isdir, basename, dirname
+from os.path import join, exists, isdir
 from os import listdir, makedirs
 from tqdm import tqdm
 from config import Config
@@ -101,43 +100,51 @@ def audio_normalizer_runner(input_dir, output_dir):
 
 def execute_pileline(input_dir, output_dir):
 
-    for songs_folder in glob(input_dir + "/**"):
+    for songs_folder in tqdm(listdir(input_dir)):
         
-        print("> Running pipeline for: " + songs_folder + "...")
+        input_folder = join(input_dir, songs_folder)
+        output_folder = join(output_dir, songs_folder)
+        temp_folder = join(output_folder, Config.temp_dir)
+        
+        print("> Running pipeline for: " + input_folder + "...")
 
-        if not isdir(songs_folder):
+        if not isdir(input_folder):
             continue
 
         print("--> Extracting vocals and transcriptions... ")
-        moises_temp_folder = join(output_dir, Config.temp_folder, 'moises')
+        moises_temp_folder = join(temp_folder, 'moises')
         if not (exists(moises_temp_folder)):
             makedirs(moises_temp_folder)
-        moises_api_runner(songs_folder, moises_temp_folder)
+        moises_api_runner(input_folder, moises_temp_folder)
 
         print("--> Converting audio files to wav... ")
-        converted_temp_folder = join(output_dir, Config.temp_folder, 'converted')
+        converted_temp_folder = join(temp_folder, 'converted')
         if not (exists(converted_temp_folder)):
             makedirs(converted_temp_folder)
         converter_runner(input_dir=moises_temp_folder, output_dir=converted_temp_folder)
         
         print("--> Removing silence... ")
-        vad_temp_folder = join(output_dir, Config.temp_folder, 'vad')
+        vad_temp_folder = join(temp_folder, 'vad')
         if not (exists(vad_temp_folder)):
             makedirs(vad_temp_folder)
         silence_remover_runner(input_dir=converted_temp_folder, output_dir=vad_temp_folder)
 
         print("--> Building target segments... ")
-        segments_temp_folder = join(output_dir, Config.temp_folder, 'segments')
+        segments_temp_folder = join(temp_folder, 'segments')
         if not (exists(segments_temp_folder)):
             makedirs(segments_temp_folder)     
         audio_segmenter_runner(input_dir=converted_temp_folder, output_dir=segments_temp_folder)
 
         print("--> Normalizing audio files... ")
-        audio_normalizer_runner(input_dir=segments_temp_folder, output_dir=output_dir)
+        audio_normalizer_runner(input_dir=segments_temp_folder, output_dir=output_folder)
 
-        temp_dir = join(output_dir, Config.temp_folder)
-        if isdir(temp_dir)  and Config.remove_temp_folder:
-            rmtree(temp_dir)
+        
+        if isdir(segments_temp_folder)  and Config.delete_temp:
+            rmtree(moises_temp_folder)
+
+        rmtree(converted_temp_folder)
+        rmtree(vad_temp_folder)
+        rmtree(segments_temp_folder)
 
 
 def main():

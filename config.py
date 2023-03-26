@@ -4,7 +4,6 @@ class Config:
     output_audio_format = 'wav'
 
     # conversion settings
-    temp_folder = 'tmp'
     sample_rate = 24000
 
     # remove silence settings
@@ -33,5 +32,6 @@ class Config:
     target_dbfs = -25
 
     # Pipeline settings
-    remove_temp_folder = True
-    verbose = 1
+    temp_dir = 'tmp'
+    delete_temp = False
+    verbose = 2
