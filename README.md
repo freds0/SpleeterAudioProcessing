@@ -1,4 +1,4 @@
-# MOISES Audio Processing
+# Audio Processing with MOISES API
 
 This python script executes an audio processing pipeline to extract and normalize audio segments from songs.
 

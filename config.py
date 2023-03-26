@@ -12,12 +12,16 @@ class Config:
 
     # moises settings
     moises_id = ""
+    waiting_time = 5
     
     # segments settings
     min_duration = 10
     max_duration = 20
     max_gap_duration = 3
+    segment_extension = 0.2
     threshold_db = 28
+    frame_length = 1024
+    hop_length = 256    
 
     # VAD settings
     frame_duration_ms = 30
@@ -30,3 +34,4 @@ class Config:
 
     # Pipeline settings
     remove_temp_folder = True
+    verbose = 1
