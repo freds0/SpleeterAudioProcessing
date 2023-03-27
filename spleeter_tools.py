@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Source: https://github.com/deezer/spleeter/wiki/4.-API-Reference#separator
 #
 import argparse
 from glob import glob
@@ -8,6 +9,7 @@ from os import makedirs
 from tqdm import tqdm
 from spleeter.separator import Separator
 from spleeter.audio.adapter import AudioAdapter
+from config import Config
 
 class SpleeterAPI:
     def __init__(self, audio_format='wav', sample_rate=24000, verbose=1):

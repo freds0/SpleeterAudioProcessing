@@ -1,10 +1,10 @@
-# Audio Processing with MOISES API
+# Audio Processing with Spleeter API
 
 This python script executes an audio processing pipeline to extract and normalize audio segments from songs.
 
 The script consists of several audio processing steps including:
 
-- Extraction of vocals and transcriptions using the Moises API
+- Extraction of vocals using the Spleeter API
 - Conversion of audio files to the wav format
 - Silence removal
 - Building of target audio segments
@@ -20,16 +20,17 @@ This script requires the following libraries:
 - torchaudio==2.0.1
 - webrtcvad==2.0.10
 - pydub==0.25.1
-- librosa==0.10.0
+- librosa==0.8.0
 - tqdm==4.65.0
+- spleeter==2.3.2
 
 ## Install 
 
 I recommend using a virtual conda environment:
 
 ```bash
-$ conda create -n moises python=3.9 pip
-$ conda activate moises
+$ conda create -n audio_processing python=3.9 pip
+$ conda activate audio_processing
 ```
 
 To install dependencies, run the command:
@@ -57,7 +58,7 @@ The config.py file contains the default settings for the audio processing pipeli
 
 ```bash
     # audio format settings
-    input_audio_format = 'flac'
+    input_audio_format = 'mp3'
     output_audio_format = 'wav'
 
     # conversion settings

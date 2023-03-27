@@ -1,6 +1,6 @@
 class Config:
     # audio format settings
-    input_audio_format = 'flac'
+    input_audio_format = 'mp3'
     output_audio_format = 'wav'
 
     # conversion settings
@@ -8,10 +8,6 @@ class Config:
 
     # remove silence settings
     aggressiveness = 2
-
-    # moises settings
-    moises_id = "e3a6cc41-802b-4de7-bcb7-5534215a0e85"
-    waiting_time = 5
     
     # segments settings
     min_duration = 10

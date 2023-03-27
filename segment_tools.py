@@ -11,6 +11,26 @@ import librosa
 import numpy as np
 import sys
 from scipy.io.wavfile import write
+from config import Config
+
+def audio_segmenter_runner(input_dir, output_dir):
+    segmenter = AudioSegmenter(
+        audio_format=Config.output_audio_format,
+        sample_rate=Config.vad_sample_rate,
+        min_duration=Config.min_duration,
+        max_duration=Config.max_duration,
+        max_gap_duration=Config.max_gap_duration,
+        threshold_db=Config.threshold_db,
+        segment_extension=Config.segment_extension,
+        frame_length=Config.frame_length,
+        hop_length=Config.hop_length,
+        verbose=Config.verbose
+    )
+    segmenter.build_segments(
+        input_dir=input_dir, 
+        output_dir=output_dir           
+    )
+
 
 class Segment:
     '''
@@ -48,7 +68,7 @@ class AudioSegmenter:
         self.max_duration = max_duration
         self.max_gap_duration = max_gap_duration
         self.threshold_db = threshold_db
-        self.end_of_file_extension = segment_extension
+        self.segment_extension = segment_extension
         self.frame_length = frame_length
         self.hop_length = hop_length
         self.verbose = verbose
@@ -119,7 +139,7 @@ class AudioSegmenter:
                             f.write(filename+"\n")
 
             # Extend the end by 0.2 sec as we sometimes lose the ends of words ending in unvoiced sounds.
-            s.end += int(self.end_of_file_extension * self.sample_rate)
+            s.end += int(self.segment_extension * self.sample_rate)
             s = s.next
 
         return result
