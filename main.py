@@ -53,7 +53,7 @@ def execute_pileline(input_dir, output_dir):
             verbose=Config.verbose
         )
         converter.process_folder(
-            input_dir=moises_temp_folder, 
+            input_dir=vocals_temp_folder, 
             output_dir=converted_temp_folder           
         )
         
