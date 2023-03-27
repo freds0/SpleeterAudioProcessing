@@ -67,9 +67,6 @@ The config.py file contains the default settings for the audio processing pipeli
 
     # remove silence settings
     aggressiveness = 2
-
-    # moises settings
-    moises_id = ""
     
     # segments settings
     min_duration = 10
